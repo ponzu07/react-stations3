@@ -1,3 +1,5 @@
+npx generate-react-cli component
+npx playwright test tests/login.spec.ts
 # Welcome to React Router!
 
 A modern, production-ready template for building full-stack React applications using React Router.

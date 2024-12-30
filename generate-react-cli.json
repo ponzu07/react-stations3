@@ -1,0 +1,14 @@
+{
+  "component": {
+    "default": {
+      "path": "app/components",
+      "withStyle": true,
+      "withTest": true,
+      "withStory": false,
+      "withLazy": true
+    }
+  },
+  "usesTypeScript": true,
+  "usesStyledComponents": true,
+  "testLibrary": "Testing Library"
+}
