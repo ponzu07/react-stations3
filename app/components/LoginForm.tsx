@@ -1,55 +1,128 @@
+import { useForm } from 'react-hook-form';
 import { useState } from 'react';
 
+type FormInputs = {
+  email: string;
+  password: string;
+};
+
+type ApiError = {
+  ErrorCode: number;
+  ErrorMessageJP: string;
+  ErrorMessageEN: string;
+};
+
+type LoginResponse = {
+  token: string;
+};
+
 export const LoginForm = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [emailError, setEmailError] = useState('');
+  const [apiError, setApiError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<FormInputs>({
+    defaultValues: {
+      email: '',
+      password: ''
+    }
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateEmail(email)) {
-      setEmailError('有効なメールアドレスを入力してください');
-    } else {
-      setEmailError('');
+  const onSubmit = async (data: FormInputs) => {
+    setIsLoading(true);
+    setApiError('');
+  
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}signin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('APIレスポンス:', errorText);
+        throw new Error('ログインに失敗しました');
+      }
+  
+      const responseData = await response.json();
+      localStorage.setItem('token', responseData.token);
+      
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : '予期せぬエラーが発生しました');
+      console.error('エラーの詳細:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {apiError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {apiError}
+        </div>
+      )}
+
       <div>
-        <label htmlFor="email">メールアドレス</label>
+        <label htmlFor="email" className="block mb-2">
+          メールアドレス
+        </label>
         <input
           id="email"
-          type="text"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border p-2 w-full"
+          type="email"
+          className="border p-2 w-full rounded"
+          {...register('email', {
+            required: 'メールアドレスは必須です',
+            pattern: {
+              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+              message: '有効なメールアドレスを入力してください'
+            }
+          })}
         />
-        {emailError && <p className="text-red-500">{emailError}</p>}
+        {errors.email && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.email.message}
+          </p>
+        )}
       </div>
-      
+
       <div>
-        <label htmlFor="password">パスワード</label>
+        <label htmlFor="password" className="block mb-2">
+          パスワード
+        </label>
         <input
           id="password"
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded"
+          {...register('password', {
+            required: 'パスワードは必須です',
+            minLength: {
+              value: 8,
+              message: 'パスワードは8文字以上である必要があります'
+            }
+          })}
         />
+        {errors.password && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.password.message}
+          </p>
+        )}
       </div>
 
       <button 
         type="submit"
-        className="bg-blue-500 text-white px-4 py-2 rounded"
+        disabled={isLoading}
+        className={`w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors
+          ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        ログイン
+        {isLoading ? 'ログイン中...' : 'ログイン'}
       </button>
     </form>
   );

@@ -1,5 +1,12 @@
+### 新規コンポーネント作成
 npx generate-react-cli component
+
+### E2E Testing
 npx playwright test tests/login.spec.ts
+
+### Unit Testing
+npm run test
+
 # Welcome to React Router!
 
 A modern, production-ready template for building full-stack React applications using React Router.
